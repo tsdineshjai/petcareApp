@@ -1,5 +1,5 @@
-import Button from "@/components/Button";
-import Logo from "@/components/Logo";
+import Button from "@/components/button";
+import Logo from "@/components/logo";
 import Image from "next/image";
 import Link from "next/link";
 
