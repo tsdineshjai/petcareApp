@@ -4,9 +4,21 @@ import PetDetails from "@/components/petdetails";
 import Petlist from "@/components/petlist";
 import SearchForm from "@/components/searchForm";
 import Stats from "@/components/stats";
+import axios from "axios";
 import React from "react";
 
-function Dashboard() {
+async function Dashboard() {
+	const data = await axios({
+		method: "get",
+		url: "https://bytegrad.com/course-assets/projects/petsoft/api/pets",
+	})
+		.then((response) => {
+			return response.data;
+		})
+		.catch((error) => {
+			console.error("Error retrieving data:", error);
+			throw new Error("Could not get data");
+		});
 	return (
 		<main>
 			<div className="flex items-center justify-between py-2">
