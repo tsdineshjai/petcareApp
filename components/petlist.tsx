@@ -1,18 +1,22 @@
 "use client";
 
-import { usePetContext } from "@/lib/hooks";
+import { usePetContext, usePetSearch } from "@/lib/hooks";
 import { cn } from "@/lib/utils";
 import Image from "next/image";
 import React from "react";
 
 function Petlist() {
 	const { pets, handleChangeSelectedId, selectedId } = usePetContext();
+	const { search } = usePetSearch();
 
-	console.log(selectedId);
+	const updatedPetlist = pets.filter((pet) =>
+		pet.name.toLowerCase().includes(search.toLowerCase())
+	);
+	console.log(updatedPetlist);
 
 	return (
 		<ul className="bg-white/50 border-b border-black/[0.08] text-stone-950 rounded-lg">
-			{pets.map((pet) => {
+			{updatedPetlist.map((pet) => {
 				return (
 					<li key={pet.id}>
 						<button
