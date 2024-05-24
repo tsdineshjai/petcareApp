@@ -12,8 +12,6 @@ function Petlist() {
 	const updatedPetlist = pets.filter((pet) =>
 		pet.name.toLowerCase().includes(search.toLowerCase())
 	);
-	console.log(updatedPetlist);
-
 	return (
 		<ul className="bg-white/50 border-b border-black/[0.08] text-stone-950 rounded-lg">
 			{updatedPetlist.map((pet) => {

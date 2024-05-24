@@ -9,6 +9,7 @@ type contextType = {
 	handleChangeSelectedId: (id: string) => void;
 	selectedPet: PetType | undefined;
 	petsCount: number;
+	petRemoverFromPetlist: (id: string) => void;
 };
 
 //context
@@ -23,13 +24,19 @@ function PetContextProvider({
 }) {
 	const [pets, setPets] = React.useState(data);
 
-	const [selectedId, setSelectedId] = React.useState("");
+	const [selectedId, setSelectedId] = React.useState<string | null>(null);
 
 	const selectedPet = pets.find((pet) => pet.id === selectedId);
 
 	const handleChangeSelectedId = (id: string) => setSelectedId(id);
 
 	const petsCount = pets?.length;
+
+	const petRemoverFromPetlist = (id: string) => {
+		setPets((prevState) => prevState.filter((pet) => pet.id !== id));
+
+		setSelectedId(null);
+	};
 
 	return (
 		<PetContext.Provider
@@ -39,6 +46,7 @@ function PetContextProvider({
 				handleChangeSelectedId,
 				selectedPet,
 				petsCount,
+				petRemoverFromPetlist,
 			}}
 		>
 			{children}

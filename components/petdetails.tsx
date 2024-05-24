@@ -4,10 +4,10 @@ import { usePetContext } from "@/lib/hooks";
 import { PetType } from "@/lib/types";
 import Image from "next/image";
 
-const buttonclassName = ` text-[10px] font-mono rounded-full px-[1rem] py-[3px] hover:bg-opacity-70 border bg-[#db2777] border-none`;
+const buttonclassName = ` text-[11px] text-white/95 font-normal rounded-full px-[1rem] py-[3px] hover:bg-opacity-70 border bg-[#db2777] border-none`;
 
 function PetDetails() {
-	const { selectedPet } = usePetContext();
+	const { selectedPet, petRemoverFromPetlist } = usePetContext();
 	return (
 		<main className=" flex flex-col bg-[#dcdee2]/50 h-full w-full   text-stone-950 rounded-lg ">
 			{!selectedPet ? (
@@ -27,7 +27,12 @@ function PetDetails() {
 						</div>
 						<div className=" flex gap-2">
 							<button className={buttonclassName}>Edit</button>
-							<button className={buttonclassName}>Checkout</button>
+							<button
+								className={buttonclassName}
+								onClick={() => petRemoverFromPetlist(selectedPet.id)}
+							>
+								Checkout
+							</button>
 						</div>
 					</section>
 					<section className="flex flex-row justify-between items-center px-[4.85rem] py-[1.25rem] ">
