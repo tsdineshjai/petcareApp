@@ -1,9 +1,63 @@
-import React from "react";
+"use client";
+
+import { usePetContext } from "@/lib/hooks";
+import { PetType } from "@/lib/types";
+import Image from "next/image";
+
+const buttonclassName = ` text-[10px] font-mono rounded-full px-[1rem] py-[3px] hover:bg-opacity-70 border bg-[#db2777] border-none`;
 
 function PetDetails() {
+	const { selectedPet } = usePetContext();
 	return (
-		<main className="bg-[#dcdee2]/50 h-full w-full  text-stone-950 rounded-lg"></main>
+		<main className=" flex flex-col bg-[#dcdee2]/50 h-full w-full   text-stone-950 rounded-lg ">
+			{!selectedPet ? (
+				<NoView />
+			) : (
+				<>
+					<section className="flex flex-row justify-between px-5 py-3 items-center bg-white border border-light">
+						<div className="flex flex-row gap-[2rem] place-items-center">
+							<Image
+								src={selectedPet?.imageUrl}
+								height={35}
+								width={35}
+								alt="pet Image"
+								className="w-[35px] h-[35px] rounded-full object-cover"
+							/>
+							<p className="font-medium text-xs">{selectedPet?.name}</p>
+						</div>
+						<div className=" flex gap-2">
+							<button className={buttonclassName}>Edit</button>
+							<button className={buttonclassName}>Checkout</button>
+						</div>
+					</section>
+					<section className="flex flex-row justify-between items-center px-[4.85rem] py-[1.25rem] ">
+						<div className="grid place-items-center">
+							<p className="text-[12px] font-medium">Owner Name</p>
+							<p className="text-[11px] font-normal">
+								{selectedPet?.ownerName}
+							</p>
+						</div>
+
+						<div className="grid place-items-center">
+							<p className="text-[12px] font-medium">Age</p>
+							<p className="text-[11px] font-normal"> {selectedPet?.age}</p>
+						</div>
+					</section>
+					<section className="bg-white  w-[91%]  mx-auto rounded-sm flex-1 mb-2  border border-light">
+						<p className="font-extralight px-2 py-1 text-[12px] text-center">
+							{selectedPet?.notes}
+						</p>
+					</section>
+				</>
+			)}
+		</main>
 	);
 }
 
 export default PetDetails;
+
+function NoView() {
+	return (
+		<p className="text-xl text-center font-mono my-auto"> No Pet Selected...</p>
+	);
+}

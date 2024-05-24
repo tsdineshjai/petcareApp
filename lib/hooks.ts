@@ -1,7 +1,8 @@
 import { PetContext } from "@/contexts/petListProvider";
 import React from "react";
 
-export default function usePetContext() {
+export function usePetContext() {
+  
 	const context = React.useContext(PetContext);
 
 	if (!context) {
