@@ -3,11 +3,22 @@
 import { usePetContext } from "@/lib/hooks";
 import { PetType } from "@/lib/types";
 import Image from "next/image";
+import {
+	Dialog,
+	DialogContent,
+	DialogHeader,
+	DialogTitle,
+	DialogTrigger,
+} from "./ui/dialog";
+import NewPetForm from "./newPetForm";
+import React from "react";
 
 const buttonclassName = ` text-[11px] text-white/95 font-normal rounded-full px-[1rem] py-[3px] hover:bg-opacity-70 border bg-[#db2777] border-none`;
 
 function PetDetails() {
 	const { selectedPet, petRemoverFromPetlist } = usePetContext();
+	const [isFormOpen, setIsFormOpen] = React.useState(false);
+
 	return (
 		<main className=" flex flex-col bg-[#dcdee2]/50 h-full w-full   text-stone-950 rounded-lg ">
 			{!selectedPet ? (
@@ -26,7 +37,22 @@ function PetDetails() {
 							<p className="font-medium text-xs">{selectedPet?.name}</p>
 						</div>
 						<div className=" flex gap-2">
-							<button className={buttonclassName}>Edit</button>
+							{/* dialog component is derived from the shadcn ui  */}
+							<Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
+								<DialogTrigger asChild>
+									<button className={buttonclassName}>Edit</button>
+								</DialogTrigger>
+								<DialogContent>
+									<DialogHeader>
+										<DialogTitle>Edit Pet Info</DialogTitle>
+									</DialogHeader>
+									<NewPetForm
+										actionType={"edit"}
+										selectedPet={selectedPet}
+										closeDialog={() => setIsFormOpen(false)}
+									/>
+								</DialogContent>
+							</Dialog>
 							<button
 								className={buttonclassName}
 								onClick={() => petRemoverFromPetlist(selectedPet.id)}

@@ -10,6 +10,8 @@ type contextType = {
 	selectedPet: PetType | undefined;
 	petsCount: number;
 	petRemoverFromPetlist: (id: string) => void;
+	handlePets: (newPet: Omit<PetType, "id">) => void;
+	handlePetEdit: (petId: string, newPet: Omit<PetType, "id">) => void;
 };
 
 //context
@@ -34,8 +36,31 @@ function PetContextProvider({
 
 	const petRemoverFromPetlist = (id: string) => {
 		setPets((prevState) => prevState.filter((pet) => pet.id !== id));
-
 		setSelectedId(null);
+	};
+
+	const handlePets = (newPet: Omit<PetType, "id">) => {
+		setPets([
+			...pets,
+			{
+				id: String(pets[pets.length - 1].id + 1),
+				...newPet,
+			},
+		]);
+	};
+
+	const handlePetEdit = (petId: string, newPet: Omit<PetType, "id">) => {
+		const updatedPets = pets.map((pet) => {
+			if (pet.id === petId) {
+				return {
+					...pet,
+					...newPet,
+				};
+			} else {
+				return pet;
+			}
+		});
+		setPets([...updatedPets]);
 	};
 
 	return (
@@ -47,6 +72,8 @@ function PetContextProvider({
 				selectedPet,
 				petsCount,
 				petRemoverFromPetlist,
+				handlePets,
+				handlePetEdit,
 			}}
 		>
 			{children}
