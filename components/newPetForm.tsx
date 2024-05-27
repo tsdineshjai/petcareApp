@@ -1,41 +1,39 @@
 "use client";
 
-import { PetType } from "@/lib/types";
 import React from "react";
 import { Button } from "./ui/button";
+import { addPet, editPet } from "@/app/actions/actions";
+import PetformButton from "./petformButton";
+import { toast } from "sonner";
 import { usePetContext } from "@/lib/hooks";
-import { createPet } from "@/app/actions/actions";
+import { Pet } from "@prisma/client";
 
 type NewPetFormProps = {
 	actionType: "edit" | "add";
-	selectedPet: PetType;
+	selectedPet: Pet;
 	closeDialog: () => void;
 };
 
 function NewPetForm({ actionType, selectedPet, closeDialog }: NewPetFormProps) {
-	const { handlePets, handlePetEdit } = usePetContext();
-
-	const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
-		e.preventDefault();
-		const formData = new FormData(e.currentTarget);
-		const petValues = {
-			name: formData.get("name") as string,
-			ownerName: formData.get("ownerName") as string,
-			imageUrl:
-				(formData.get("imageUrl") as string) ||
-				"https://bytegrad.com/course-assets/react-nextjs/pet-placeholder.png",
-			age: +(formData.get("age") as string),
-			notes: formData.get("notes") as string,
-		};
-		if (actionType === "edit") {
-			handlePetEdit(selectedPet.id, petValues);
-		} else {
-			handlePets(petValues);
-		}
-		closeDialog();
-	};
+	// const { handleAddPet, handleEditPet } = usePetContext();
 	return (
-		<form onSubmit={handleSubmit}>
+		<form
+			action={async (formData) => {
+				closeDialog();
+				try {
+					if (actionType === "edit") {
+						console.log("udpate ran");
+						await editPet(formData, selectedPet);
+					} else if (actionType === "add") {
+						await addPet(formData);
+					}
+				} catch (error: any) {
+					console.log(`catch block is getting executed`);
+					toast.warning(`${error.message}`);
+					return;
+				}
+			}}
+		>
 			<p>
 				<label className="text-xs" htmlFor="name">
 					Name
@@ -101,9 +99,7 @@ function NewPetForm({ actionType, selectedPet, closeDialog }: NewPetFormProps) {
 				required
 				defaultValue={actionType === "edit" ? selectedPet?.notes : ""}
 			/>
-			<Button type="submit" className="float-right mt-[7px]">
-				{actionType === "add" ? "Add Pet" : "Save"}
-			</Button>
+			<PetformButton actionType={actionType} />
 		</form>
 	);
 }

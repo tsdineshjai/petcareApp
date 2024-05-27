@@ -1,5 +1,6 @@
 import Header from "@/components/app-header";
 import Footer from "@/components/footer";
+import { Toaster } from "@/components/ui/sonner";
 import PetContextProvider from "@/contexts/petListProvider";
 import PetSearchContextProvider from "@/contexts/petSearchProvider";
 import prisma from "@/lib/db";
@@ -22,6 +23,7 @@ async function Layout({ children }: LayoutProps) {
 				</PetSearchContextProvider>
 				<Footer />
 			</section>
+			<Toaster position={"top-right"} />
 		</main>
 	);
 }

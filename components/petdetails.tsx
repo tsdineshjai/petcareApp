@@ -1,7 +1,6 @@
 "use client";
 
 import { usePetContext } from "@/lib/hooks";
-import { PetType } from "@/lib/types";
 import Image from "next/image";
 import {
 	Dialog,
@@ -16,7 +15,7 @@ import React from "react";
 const buttonclassName = ` text-[11px] text-white/95 font-normal rounded-full px-[1rem] py-[3px] hover:bg-opacity-70 border bg-[#db2777] border-none`;
 
 function PetDetails() {
-	const { selectedPet, petRemoverFromPetlist } = usePetContext();
+	const { selectedPet, handleCheckoutPet } = usePetContext();
 	const [isFormOpen, setIsFormOpen] = React.useState(false);
 
 	return (
@@ -55,7 +54,9 @@ function PetDetails() {
 							</Dialog>
 							<button
 								className={buttonclassName}
-								onClick={() => petRemoverFromPetlist(selectedPet.id)}
+								onClick={async () => {
+									await handleCheckoutPet(selectedPet.id);
+								}}
 							>
 								Checkout
 							</button>

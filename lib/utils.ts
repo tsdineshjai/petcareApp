@@ -7,3 +7,7 @@ export function cn(...inputs: ClassValue[]) {
 
 //clsx helps to write conditional classes
 //twMerge helps to merge whenm there is a clash of two similar classes, helps to give [precenedenc to the latter]
+
+export function delay(ms: number) {
+	return new Promise((resolve) => setTimeout(resolve, ms));
+}

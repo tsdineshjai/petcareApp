@@ -6,10 +6,11 @@ import Image from "next/image";
 import React from "react";
 
 function Petlist() {
-	const { pets, handleChangeSelectedId, selectedId } = usePetContext();
+	const { optimisticPets, handleChangeSelectedId, selectedId } =
+		usePetContext();
 	const { search } = usePetSearch();
 
-	const updatedPetlist = pets.filter((pet) =>
+	const updatedPetlist = optimisticPets.filter((pet) =>
 		pet.name.toLowerCase().includes(search.toLowerCase())
 	);
 	return (

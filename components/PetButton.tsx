@@ -13,13 +13,11 @@ import {
 } from "./ui/dialog";
 import NewPetForm from "./newPetForm";
 import { usePetContext } from "@/lib/hooks";
-import { PetType } from "@/lib/types";
+import { Pet } from "@prisma/client";
 
 function PetButton() {
 	const [isFormOpen, setIsFormOpen] = React.useState(false);
 	const { selectedPet } = usePetContext();
-
-	console.log("form open is ", isFormOpen);
 
 	return (
 		<Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
@@ -35,7 +33,7 @@ function PetButton() {
 				<NewPetForm
 					actionType={"add"}
 					closeDialog={() => setIsFormOpen(false)}
-					selectedPet={selectedPet as PetType}
+					selectedPet={selectedPet as Pet}
 				/>
 			</DialogContent>
 		</Dialog>
