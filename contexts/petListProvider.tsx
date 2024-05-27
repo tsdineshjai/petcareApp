@@ -1,5 +1,6 @@
 "use client";
 
+import { createPet } from "@/app/actions/actions";
 import { PetType } from "@/lib/types";
 import React from "react";
 
@@ -19,13 +20,11 @@ export const PetContext = React.createContext<contextType | null>(null);
 
 function PetContextProvider({
 	children,
-	data,
+	data: pets,
 }: {
 	children: React.ReactNode;
 	data: PetType[];
 }) {
-	const [pets, setPets] = React.useState(data);
-
 	const [selectedId, setSelectedId] = React.useState<string | null>(null);
 
 	const selectedPet = pets.find((pet) => pet.id === selectedId);
@@ -39,14 +38,8 @@ function PetContextProvider({
 		setSelectedId(null);
 	};
 
-	const handlePets = (newPet: Omit<PetType, "id">) => {
-		setPets([
-			...pets,
-			{
-				id: String(pets[pets.length - 1].id + 1),
-				...newPet,
-			},
-		]);
+	const handlePets = async (newPet: Omit<PetType, "id">) => {
+		await createPet(newPet);
 	};
 
 	const handlePetEdit = (petId: string, newPet: Omit<PetType, "id">) => {
