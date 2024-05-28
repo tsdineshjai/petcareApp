@@ -1,12 +1,15 @@
 "use client";
 
 import React from "react";
-import { Button } from "./ui/button";
 import { addPet, editPet } from "@/app/actions/actions";
 import PetformButton from "./petformButton";
 import { toast } from "sonner";
-import { usePetContext } from "@/lib/hooks";
 import { Pet } from "@prisma/client";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import { DEFAULT_PET_IMAGE } from "@/lib/constants";
+import { FormSchema } from "@/lib/validation";
 
 type NewPetFormProps = {
 	actionType: "edit" | "add";
@@ -15,23 +18,37 @@ type NewPetFormProps = {
 };
 
 function NewPetForm({ actionType, selectedPet, closeDialog }: NewPetFormProps) {
-	// const { handleAddPet, handleEditPet } = usePetContext();
+	const {
+		register,
+		trigger,
+		getValues,
+		formState: { errors },
+	} = useForm<z.infer<typeof FormSchema>>({
+		resolver: zodResolver(FormSchema),
+	});
 	return (
 		<form
 			action={async (formData) => {
-				closeDialog();
-				try {
-					if (actionType === "edit") {
-						console.log("udpate ran");
-						await editPet(formData, selectedPet);
-					} else if (actionType === "add") {
-						await addPet(formData);
-					}
-				} catch (error: any) {
-					console.log(`catch block is getting executed`);
-					toast.warning(`${error.message}`);
+				const result = await trigger();
+				if (!result) {
 					return;
 				}
+
+				const petData = getValues();
+				petData.imageUrl = petData.imageUrl || DEFAULT_PET_IMAGE;
+
+				if (actionType === "edit") {
+					const error = await editPet(petData, selectedPet);
+					if (error) {
+						toast.warning(`${error.message}`);
+					}
+				} else if (actionType === "add") {
+					const error = await addPet(petData);
+					if (error) {
+						toast.warning(`${error.message}`);
+					}
+				}
+				closeDialog();
 			}}
 		>
 			<p>
@@ -41,12 +58,13 @@ function NewPetForm({ actionType, selectedPet, closeDialog }: NewPetFormProps) {
 			</p>
 			<input
 				type="text"
-				name="name"
 				id="name"
+				{...register("name")}
 				className="border py-1 mb-1 px-1 w-full rounded-md mt-[0.25rem]"
-				required
-				defaultValue={actionType === "edit" ? selectedPet?.name : ""}
 			/>
+			{errors.name && (
+				<p className="text-[10px] text-red-600">{errors.name.message}</p>
+			)}
 			<p>
 				<label className="text-xs" htmlFor="ownerName">
 					Owner Name
@@ -54,12 +72,13 @@ function NewPetForm({ actionType, selectedPet, closeDialog }: NewPetFormProps) {
 			</p>
 			<input
 				type="text"
-				name="ownerName"
 				id="ownerName"
+				{...register("ownerName")}
 				className="border py-1 mb-[11px] px-1 w-full rounded-md mt-[0.25rem]"
-				required
-				defaultValue={actionType === "edit" ? selectedPet?.ownerName : ""}
 			/>
+			{errors.ownerName && (
+				<p className="text-[10px] text-red-600">{errors.ownerName.message}</p>
+			)}
 			<p>
 				<label className="text-xs" htmlFor="imageUrl">
 					Image
@@ -67,11 +86,13 @@ function NewPetForm({ actionType, selectedPet, closeDialog }: NewPetFormProps) {
 			</p>
 			<input
 				type="text"
-				name="imageUrl"
 				id="imageUrl"
+				{...register("imageUrl")}
 				className="border py-1 mb-[11px] px-1 w-full rounded-md mt-[0.25rem]"
-				defaultValue={actionType === "edit" ? selectedPet?.imageUrl : ""}
 			/>
+			{errors.imageUrl && (
+				<p className="text-[10px] text-red-600">{errors.imageUrl.message}</p>
+			)}
 			<p>
 				<label className="text-xs" htmlFor="age">
 					Age
@@ -79,26 +100,28 @@ function NewPetForm({ actionType, selectedPet, closeDialog }: NewPetFormProps) {
 			</p>
 			<input
 				type="number"
-				name="age"
 				id="age"
 				className="border py-1 mb-[11px] px-1 w-full rounded-md mt-[0.25rem]"
-				required
-				defaultValue={actionType === "edit" ? selectedPet?.age : ""}
+				{...register("age")}
 			/>
+			{errors.age && (
+				<p className="text-[10px] text-red-600">{errors.age.message}</p>
+			)}
 			<p>
 				<label className="text-xs" htmlFor="notes">
 					Notes
 				</label>
 			</p>
 			<textarea
-				name="notes"
 				id="notes"
 				className="border py-1 mb-[11px] px-1 w-full rounded-md mt-[0.25rem]"
 				rows={4}
 				cols={50}
-				required
-				defaultValue={actionType === "edit" ? selectedPet?.notes : ""}
+				{...register("notes")}
 			/>
+			{errors.notes && (
+				<p className="text-[10px] text-red-600">{errors.notes.message}</p>
+			)}
 			<PetformButton actionType={actionType} />
 		</form>
 	);
