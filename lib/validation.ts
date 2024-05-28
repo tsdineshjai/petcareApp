@@ -22,3 +22,5 @@ export const FormSchema = z
 			imageUrl: petData?.imageUrl || DEFAULT_PET_IMAGE,
 		};
 	});
+
+export const IndivdiualPetId = z.string().cuid();

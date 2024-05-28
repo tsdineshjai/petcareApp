@@ -25,7 +25,15 @@ function NewPetForm({ actionType, selectedPet, closeDialog }: NewPetFormProps) {
 		formState: { errors },
 	} = useForm<z.infer<typeof FormSchema>>({
 		resolver: zodResolver(FormSchema),
+		defaultValues: {
+			name: selectedPet?.name,
+			ownerName: selectedPet?.ownerName,
+			imageUrl: selectedPet?.imageUrl,
+			age: selectedPet?.age,
+			notes: selectedPet?.notes,
+		},
 	});
+
 	return (
 		<form
 			action={async (formData) => {
@@ -38,7 +46,7 @@ function NewPetForm({ actionType, selectedPet, closeDialog }: NewPetFormProps) {
 				petData.imageUrl = petData.imageUrl || DEFAULT_PET_IMAGE;
 
 				if (actionType === "edit") {
-					const error = await editPet(petData, selectedPet);
+					const error = await editPet(petData, selectedPet.id);
 					if (error) {
 						toast.warning(`${error.message}`);
 					}
