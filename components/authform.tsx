@@ -2,11 +2,11 @@
 
 import React from "react";
 import { Button } from "./ui/button";
-import { login } from "@/app/actions/actions";
+import { login, SignUp } from "@/app/actions/actions";
 
 function AuthForm({ type }: { type: "Login" | "Sign Up" }) {
 	return (
-		<form action={login}>
+		<form action={type === "Login" ? login : SignUp}>
 			<div>
 				<label htmlFor="Email">Email</label>
 			</div>
