@@ -1,6 +1,5 @@
 import AuthForm from "@/components/authform";
 import H1 from "@/components/h1";
-import { Button } from "@/components/ui/button";
 import Link from "next/link";
 
 import React from "react";

@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import prisma from "@/lib/db";
 import { FormSchema, IndivdiualPetId } from "@/lib/validation";
-import { signIn } from "@/lib/auth";
+import { signIn, signOut } from "@/lib/auth";
 
 // user actions ->
 
@@ -11,6 +11,12 @@ export async function login(userData: FormData) {
 	const authData = Object.fromEntries(userData.entries());
 
 	await signIn("credentials", authData);
+}
+
+export async function signout() {
+	await signOut({
+		redirectTo: "/",
+	});
 }
 
 // pet actions--CRUD operations
