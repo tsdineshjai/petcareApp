@@ -2,17 +2,27 @@
 
 import { revalidatePath } from "next/cache";
 import prisma from "@/lib/db";
-import { Pet } from "@prisma/client";
-import { PetEssentials } from "@/lib/types";
 import { FormSchema, IndivdiualPetId } from "@/lib/validation";
+import { signIn } from "@/lib/auth";
 
-export async function addPet(formData: unknown) {
-	const { success, data } = FormSchema.safeParse(formData);
+// user actions ->
 
-	if (success) {
+export async function login(userData: FormData) {
+	const authData = Object.fromEntries(userData.entries());
+
+	await signIn("credentials", authData);
+}
+
+// pet actions--CRUD operations
+export async function addPet(pet: unknown) {
+	const validatedForm = FormSchema.safeParse(pet);
+
+	if (validatedForm.success) {
 		try {
 			await prisma.pet.create({
-				data: data,
+				data: {
+					...validatedForm.data,
+				},
 			});
 			console.log(`successfully added the pet`);
 			revalidatePath("/app", "layout");

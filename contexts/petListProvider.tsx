@@ -11,10 +11,10 @@ type contextType = {
 	selectedId: Pet["id"] | null;
 	selectedPet: Pet | undefined;
 	petsCount: number;
-	handleChangeSelectedId: (id: string) => void;
-	handleCheckoutPet: (id: string) => Promise<void>;
 	handleAddPet: (newPet: PetEssentials) => Promise<void>;
-	handleEditPet: (petId: string, newPet: Pet) => Promise<void>;
+	handleEditPet: (petId: Pet["id"], newPet: PetEssentials) => Promise<void>;
+	handleCheckoutPet: (id: Pet["id"]) => Promise<void>;
+	handleChangeSelectedId: (id: Pet["id"]) => void;
 };
 
 //context
@@ -64,7 +64,7 @@ function PetContextProvider({
 			return;
 		}
 	};
-	const handleEditPet = async (petId: Pet["id"], newPetData: Pet) => {
+	const handleEditPet = async (petId: Pet["id"], newPetData: PetEssentials) => {
 		setOptimisticPets({ action: "edit", payload: { id: petId, newPetData } });
 		const error = await editPet(petId, newPetData);
 		if (error) {

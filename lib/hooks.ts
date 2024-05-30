@@ -1,7 +1,5 @@
 import { PetContext } from "@/contexts/petListProvider";
-import PetSearchContextProvider, {
-	PetSearchCtxt,
-} from "@/contexts/petSearchProvider";
+import { PetSearchCtxt } from "@/contexts/petSearchProvider";
 import React, { useContext } from "react";
 
 export function usePetContext() {

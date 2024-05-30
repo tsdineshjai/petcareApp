@@ -9,7 +9,7 @@ function Login() {
 	return (
 		<main className=" w-fit flex-col gap-2 p-3 flex justify-center items-center ">
 			<H1 className="m-2">Login</H1>
-			<AuthForm type={"login"} />
+			<AuthForm type={"Login"} />
 			<p className=" font-light mt-[1rem]">
 				Don&apos;t have an account?
 				<Link

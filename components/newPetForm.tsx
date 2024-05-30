@@ -10,6 +10,8 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { DEFAULT_PET_IMAGE } from "@/lib/constants";
 import { FormSchema } from "@/lib/validation";
+import { usePetContext } from "@/lib/hooks";
+import { PetEssentials } from "@/lib/types";
 
 type NewPetFormProps = {
 	actionType: "edit" | "add";
@@ -18,6 +20,7 @@ type NewPetFormProps = {
 };
 
 function NewPetForm({ actionType, selectedPet, closeDialog }: NewPetFormProps) {
+	const { handleAddPet, handleEditPet } = usePetContext();
 	const {
 		register,
 		trigger,
@@ -25,38 +28,34 @@ function NewPetForm({ actionType, selectedPet, closeDialog }: NewPetFormProps) {
 		formState: { errors },
 	} = useForm<z.infer<typeof FormSchema>>({
 		resolver: zodResolver(FormSchema),
-		defaultValues: {
-			name: selectedPet?.name,
-			ownerName: selectedPet?.ownerName,
-			imageUrl: selectedPet?.imageUrl,
-			age: selectedPet?.age,
-			notes: selectedPet?.notes,
-		},
+		defaultValues:
+			actionType == "edit"
+				? {
+						name: selectedPet?.name,
+						ownerName: selectedPet?.ownerName,
+						imageUrl: selectedPet?.imageUrl,
+						age: selectedPet?.age,
+						notes: selectedPet?.notes,
+				  }
+				: undefined,
 	});
 
 	return (
 		<form
-			action={async (formData) => {
+			action={async () => {
 				const result = await trigger();
-				if (!result) {
-					return;
-				}
+				if (!result) return;
+
+				closeDialog();
 
 				const petData = getValues();
 				petData.imageUrl = petData.imageUrl || DEFAULT_PET_IMAGE;
 
-				if (actionType === "edit") {
-					const error = await editPet(petData, selectedPet.id);
-					if (error) {
-						toast.warning(`${error.message}`);
-					}
-				} else if (actionType === "add") {
-					const error = await addPet(petData);
-					if (error) {
-						toast.warning(`${error.message}`);
-					}
+				if (actionType === "add") {
+					await handleAddPet(petData);
+				} else if (actionType === "edit") {
+					await handleEditPet(selectedPet!.id, petData);
 				}
-				closeDialog();
 			}}
 		>
 			<p>
