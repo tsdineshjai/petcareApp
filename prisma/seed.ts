@@ -1,13 +1,10 @@
 import { Prisma, PrismaClient } from "@prisma/client";
-
-import "bcrypt" from "bcrypt";
-
-
+import bcrypt from "bcrypt";
 
 const prisma = new PrismaClient();
 
 const userData: Prisma.UserCreateInput = {
-	email: "example@gmail.com",
+	email: "tsri@gmail.com",
 	hashedPassword: "",
 	pets: {
 		create: [
@@ -43,7 +40,7 @@ const userData: Prisma.UserCreateInput = {
 async function main() {
 	console.log(`Start seeding ...`);
 
-	const hashedPassword = await bcrypt.hash("example", 10);
+	const hashedPassword = await bcrypt.hash("iknowhoyouare", 10);
 	userData.hashedPassword = hashedPassword;
 
 	await prisma.user.create({

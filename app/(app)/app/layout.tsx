@@ -12,11 +12,13 @@ type LayoutProps = {
 async function Layout({ children }: LayoutProps) {
 	const pets = await prisma.pet.findMany();
 
-	const user = await prisma.user.findUnique({
-		where: {
-			email: "tsri@gmail.com",
-		},
-	});
+	console.log(pets);
+
+	// const user = await prisma.user.findUnique({
+	// 	where: {
+	// 		email: "tsri@gmail.com",
+	// 	},
+	// });
 
 	return (
 		<main className="min-h-[255px]  bg-pink-600 relative  text-white">
