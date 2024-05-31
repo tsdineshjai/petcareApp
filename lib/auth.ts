@@ -1,8 +1,9 @@
 import NextAuth from "next-auth";
 import { NextAuthConfig } from "next-auth";
-import prisma from "./db";
 import bcrypt from "bcryptjs";
 import Credentials from "next-auth/providers/credentials";
+import { getUserByEmail } from "./server-utils";
+import { SignInSchema } from "./validation";
 
 const config = {
 	pages: {
@@ -12,27 +13,30 @@ const config = {
 	providers: [
 		Credentials({
 			async authorize(credentials) {
-				const { email, password } = credentials;
+				const validatedFormData = SignInSchema.safeParse(credentials);
 
-				const user = await prisma.user.findUnique({
-					where: {
-						email,
-					},
-				});
-				if (!user) {
-					console.log(`No user found withe the provided email`);
+				if (!validatedFormData.success) {
 					return null;
 				}
 
-				//once the user exists in database, next we check up the password match
-				const isPasswordMatch = bcrypt.compare(
-					password as string,
+				// extract values
+				const { email, password } = validatedFormData.data;
+
+				const user = await getUserByEmail(email);
+				if (!user) {
+					console.log("No user found");
+					return null;
+				}
+
+				const passwordsMatch = await bcrypt.compare(
+					password,
 					user.hashedPassword
 				);
-				if (!isPasswordMatch) {
-					console.log(`passwords doesnt match`);
+				if (!passwordsMatch) {
+					console.log("Invalid credentials");
 					return null;
 				}
+
 				return user;
 			},
 		}),
@@ -45,14 +49,17 @@ const config = {
 			const isTryingToAccessAppRoute =
 				request.nextUrl.pathname.includes("/app");
 
+			//not logged in and try to access account and dashboard route, access is denied
 			if (!isLoggedIn && isTryingToAccessAppRoute) {
 				return false;
 			}
 
+			//logged in and trying to access private routes:account and dashboard, access provided
 			if (isLoggedIn && isTryingToAccessAppRoute) {
 				return true;
 			}
 
+			//loggedIn and trying to access login,singup and home page, you are redirected to app/dashboard
 			if (isLoggedIn && !isTryingToAccessAppRoute) {
 				return Response.redirect(new URL("/app/dashboard", request.url));
 			}
@@ -60,7 +67,6 @@ const config = {
 			if (!isLoggedIn && !isTryingToAccessAppRoute) {
 				return true;
 			}
-			return false;
 		},
 
 		//this runs only when the user logins , then it generates a jwt, we are attaching id to token object as it deemeed necessary
@@ -81,4 +87,9 @@ const config = {
 	},
 } satisfies NextAuthConfig;
 
-export const { auth, signIn, signOut } = NextAuth(config);
+export const {
+	auth,
+	signIn,
+	signOut,
+	handlers: { GET, POST },
+} = NextAuth(config);

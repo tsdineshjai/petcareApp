@@ -4,7 +4,7 @@ import { Toaster } from "@/components/ui/sonner";
 import PetContextProvider from "@/contexts/petListProvider";
 import PetSearchContextProvider from "@/contexts/petSearchProvider";
 import prisma from "@/lib/db";
-import { checkAuth } from "@/lib/server-utils";
+import { checkAuth, getPetsByUserId } from "@/lib/server-utils";
 
 type LayoutProps = {
 	children: React.ReactNode;
@@ -14,11 +14,7 @@ async function Layout({ children }: LayoutProps) {
 	const session = await checkAuth();
 
 	console.log(session?.user);
-	const pets = await prisma.pet.findMany({
-		where: {
-			userId: session.user.id,
-		},
-	});
+	const pets = await getPetsByUserId(session.user.id);
 
 	return (
 		<main className="min-h-[255px]  bg-pink-600 relative  text-white">

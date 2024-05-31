@@ -7,7 +7,7 @@ function Signup() {
 	return (
 		<main className=" w-fit flex-col gap-2 p-3 flex justify-center items-center ">
 			<H1 className="m-2">Sign Up</H1>
-			<AuthForm type="Sign Up" />
+			<AuthForm type="signUp" />
 
 			<p className=" font-light mt-[1rem]">
 				Already have an account?

@@ -24,3 +24,8 @@ export const FormSchema = z
 	});
 
 export const IndivdiualPetId = z.string().cuid();
+
+export const SignInSchema = z.object({
+	email: z.string().email().min(5, { message: "write a valid email" }),
+	password: z.string().min(6, { message: "minimum six characters in length" }),
+});

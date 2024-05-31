@@ -2,17 +2,45 @@
 
 import { revalidatePath } from "next/cache";
 import prisma from "@/lib/db";
-import { FormSchema, IndivdiualPetId } from "@/lib/validation";
-import { auth, signIn, signOut } from "@/lib/auth";
+import { FormSchema, IndivdiualPetId, SignInSchema } from "@/lib/validation";
+import { signIn, signOut } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import bcrypt from "bcrypt";
-import { checkAuth } from "@/lib/server-utils";
+import { checkAuth, getPetById } from "@/lib/server-utils";
+import { Prisma } from "@prisma/client";
+import { delay } from "@/lib/utils";
+import { AuthError } from "next-auth";
 
 // user actions ->
 
-export async function login(userData: FormData) {
-	await signIn("credentials", userData);
-	redirect("/app/dashboard");
+export async function logIn(prevState: unknown, formData: unknown) {
+	await delay(1000);
+	if (!(formData instanceof FormData)) {
+		return {
+			message: "Invalid form data.",
+		};
+	}
+
+	try {
+		await signIn("credentials", formData);
+	} catch (error) {
+		if (error instanceof AuthError) {
+			switch (error.type) {
+				case "CredentialsSignin": {
+					return {
+						message: "Invalid credentials.",
+					};
+				}
+				default: {
+					return {
+						message: "Error. Could not sign in.",
+					};
+				}
+			}
+		}
+
+		throw error; // nextjs redirects throws error, so we need to rethrow it
+	}
 }
 
 export async function signout() {
@@ -21,19 +49,50 @@ export async function signout() {
 	});
 }
 
-export async function SignUp(formData: FormData) {
-	//get the hashed password
+export async function signUp(prevState: unknown, formData: unknown) {
+	await delay(1000);
 
-	const password = await bcrypt.hash(formData.get("password") as string, 10);
+	// check if formData is a FormData type
+	if (!(formData instanceof FormData)) {
+		return {
+			message: "Invalid form data.",
+		};
+	}
 
-	await prisma.user.create({
-		data: {
-			email: formData.get("email") as string,
-			hashedPassword: password,
-		},
-	});
+	// convert formData to a plain object
+	const formDataEntries = Object.fromEntries(formData.entries());
 
-	//we are signing in once signuped to generate a json web token, so that you are authorized to private routes
+	// validation
+	const validatedFormData = SignInSchema.safeParse(formDataEntries);
+	if (!validatedFormData.success) {
+		return {
+			message: "Invalid form data.",
+		};
+	}
+
+	const { email, password } = validatedFormData.data;
+	const hashedPassword = await bcrypt.hash(password, 10);
+	try {
+		await prisma.user.create({
+			data: {
+				email,
+				hashedPassword,
+			},
+		});
+	} catch (error) {
+		if (error instanceof Prisma.PrismaClientKnownRequestError) {
+			if (error.code === "P2002") {
+				return {
+					message: "Email already exists.",
+				};
+			}
+		}
+
+		return {
+			message: "Could not create user.",
+		};
+	}
+
 	await signIn("credentials", formData);
 }
 
@@ -87,17 +146,16 @@ export async function editPet(selectedId: unknown, formData: unknown) {
 
 	/* validation of the schema */
 	const validatedForm = FormSchema.safeParse(formData);
-	if (!validatedForm.success) {
-		console.log(validatedForm.error);
-	}
 	const validatedId = IndivdiualPetId.safeParse(selectedId);
 
+	if (!validatedId.success || !validatedForm.success) {
+		return {
+			message: "Invalid pet data.",
+		};
+	}
+
 	/* checking the existence of the pet that is going to be updated */
-	const pet = await prisma.pet.findUnique({
-		where: {
-			id: validatedId.data,
-		},
-	});
+	const pet = await getPetById(validatedId.data);
 
 	if (!pet) {
 		return {
@@ -153,12 +211,14 @@ export async function deletePet(petId: unknown) {
 	/* validation of the schema */
 	const validatedId = IndivdiualPetId.safeParse(petId);
 
+	if (!validatedId.success) {
+		return {
+			message: "Invalid pet data.",
+		};
+	}
+
 	/* checking the existence of the pet that is going to be deleted */
-	const pet = await prisma.pet.findUnique({
-		where: {
-			id: validatedId.data,
-		},
-	});
+	const pet = await getPetById(validatedId.data);
 
 	if (!pet) {
 		return {
