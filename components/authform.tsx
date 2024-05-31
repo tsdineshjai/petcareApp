@@ -2,7 +2,6 @@
 
 import { logIn, signUp } from "@/app/actions/actions";
 import AuthFormButton from "./auth-form-button";
-
 import { useFormState } from "react-dom";
 
 type AuthFormProps = {
@@ -15,7 +14,6 @@ function AuthForm({ type }: AuthFormProps) {
 
 	return (
 		<form action={type === "logIn" ? dispatchLogIn : dispatchSignUp}>
-			{" "}
 			<label className="block" htmlFor="Email">
 				Email
 			</label>

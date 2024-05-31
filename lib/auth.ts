@@ -41,7 +41,7 @@ const config = {
 			},
 		}),
 	],
-	// this runs on middleware. means it runs for every route request
+	// this runs on middleware. means it runs for every try of  route access
 	callbacks: {
 		authorized: ({ auth, request }) => {
 			const isLoggedIn = auth?.user;

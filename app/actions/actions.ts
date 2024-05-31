@@ -4,7 +4,6 @@ import { revalidatePath } from "next/cache";
 import prisma from "@/lib/db";
 import { FormSchema, IndivdiualPetId, SignInSchema } from "@/lib/validation";
 import { signIn, signOut } from "@/lib/auth";
-import { redirect } from "next/navigation";
 import bcrypt from "bcrypt";
 import { checkAuth, getPetById } from "@/lib/server-utils";
 import { Prisma } from "@prisma/client";
@@ -20,7 +19,6 @@ export async function logIn(prevState: unknown, formData: unknown) {
 			message: "Invalid form data.",
 		};
 	}
-
 	try {
 		await signIn("credentials", formData);
 	} catch (error) {
@@ -44,6 +42,7 @@ export async function logIn(prevState: unknown, formData: unknown) {
 }
 
 export async function signout() {
+	await delay(1500);
 	await signOut({
 		redirectTo: "/",
 	});
