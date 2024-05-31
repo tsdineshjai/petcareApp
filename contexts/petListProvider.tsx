@@ -3,6 +3,7 @@
 import { addPet, deletePet, editPet } from "@/app/actions/actions";
 import { PetEssentials } from "@/lib/types";
 import { Pet } from "@prisma/client";
+import { redirect } from "next/navigation";
 import React, { useOptimistic } from "react";
 import { toast } from "sonner";
 
@@ -48,6 +49,8 @@ function PetContextProvider({
 			}
 		}
 	);
+
+
 
 	const [selectedId, setSelectedId] = React.useState<string | null>(null);
 

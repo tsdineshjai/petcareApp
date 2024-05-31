@@ -38,15 +38,35 @@ export async function SignUp(formData: FormData) {
 
 // pet actions--CRUD operations
 export async function addPet(pet: unknown) {
+	const session = await auth();
+	if (!session?.user) {
+		redirect("/");
+	}
+
 	const validatedForm = FormSchema.safeParse(pet);
 
 	if (validatedForm.success) {
 		try {
 			await prisma.pet.create({
 				data: {
+					userId: session.user.id,
 					...validatedForm.data,
 				},
 			});
+
+			// you can do like this in the below way also
+
+			/* 		await prisma.pet.create({
+				data: {
+					...validatedForm.data,
+					user: {
+						connect: {
+							id: session.user.id,
+						},
+					},
+				},
+			}); */
+
 			console.log(`successfully added the pet`);
 			revalidatePath("/app", "layout");
 		} catch (error: any) {
@@ -89,8 +109,46 @@ export async function editPet(formData: unknown, selectedId: unknown) {
 	}
 }
 
+//before deleting, we need to make valdation and authentication checks
+/* 
+checks include below
+1. If the user is logged in
+2. If the pet that is going to be deleted actually exists
+3. If the petId and the session user.id matches, to check if the user is going to delete a pet of its own
+
+*/
 export async function deletePet(petId: unknown) {
+	/* if the user is logged In */
+	const session = await auth();
+	if (!session?.user) {
+		redirect("/login");
+	}
+
+	/* validation of the schema */
 	const validatedId = IndivdiualPetId.safeParse(petId);
+
+	/* checking the existence of the pet that is going to be deleted */
+	const pet = await prisma.pet.findUnique({
+		where: {
+			id: validatedId.data,
+		},
+	});
+
+	if (!pet) {
+		return {
+			message: "pet not found",
+		};
+	}
+
+	/* checking the match of pet.userId and sesson.userId, 
+	to know if the user has the pet in his list  */
+	const DoesTheUserOwnsThePet = pet.userId === session.user.id;
+
+	if (!DoesTheUserOwnsThePet) {
+		return {
+			message: "user is not authorized to make the changes",
+		};
+	}
 
 	if (validatedId.success) {
 		try {

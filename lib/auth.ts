@@ -62,6 +62,22 @@ const config = {
 			}
 			return false;
 		},
+
+		//this runs only when the user logins , then it generates a jwt, we are attaching id to token object as it deemeed necessary
+
+		jwt: ({ token, user }) => {
+			if (user) {
+				token.userId = user.id;
+			}
+			return token;
+		},
+
+		session: ({ session, token }) => {
+			if (session.user) {
+				session.user.id = token.userId as string;
+			}
+			return session;
+		},
 	},
 } satisfies NextAuthConfig;
 
