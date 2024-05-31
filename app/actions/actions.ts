@@ -6,6 +6,7 @@ import { FormSchema, IndivdiualPetId } from "@/lib/validation";
 import { auth, signIn, signOut } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import bcrypt from "bcrypt";
+import { checkAuth } from "@/lib/server-utils";
 
 // user actions ->
 
@@ -38,25 +39,23 @@ export async function SignUp(formData: FormData) {
 
 // pet actions--CRUD operations
 export async function addPet(pet: unknown) {
-	const session = await auth();
-	if (!session?.user) {
-		redirect("/");
-	}
+	/* checking if the user is logged in */
+	const session = await checkAuth();
 
 	const validatedForm = FormSchema.safeParse(pet);
 
 	if (validatedForm.success) {
 		try {
-			await prisma.pet.create({
-				data: {
-					userId: session.user.id,
-					...validatedForm.data,
-				},
-			});
+			// await prisma.pet.create({
+			// 	data: {
+			// 		userId: session.user.id,
+			// 		...validatedForm.data,
+			// 	},
+			// });
 
 			// you can do like this in the below way also
 
-			/* 		await prisma.pet.create({
+			await prisma.pet.create({
 				data: {
 					...validatedForm.data,
 					user: {
@@ -65,7 +64,7 @@ export async function addPet(pet: unknown) {
 						},
 					},
 				},
-			}); */
+			});
 
 			console.log(`successfully added the pet`);
 			revalidatePath("/app", "layout");
@@ -82,9 +81,39 @@ export async function addPet(pet: unknown) {
 	}
 }
 
-export async function editPet(formData: unknown, selectedId: unknown) {
+export async function editPet(selectedId: unknown, formData: unknown) {
+	/* if the user is actually logged in */
+	const session = await checkAuth();
+
+	/* validation of the schema */
 	const validatedForm = FormSchema.safeParse(formData);
+	if (!validatedForm.success) {
+		console.log(validatedForm.error);
+	}
 	const validatedId = IndivdiualPetId.safeParse(selectedId);
+
+	/* checking the existence of the pet that is going to be updated */
+	const pet = await prisma.pet.findUnique({
+		where: {
+			id: validatedId.data,
+		},
+	});
+
+	if (!pet) {
+		return {
+			message: "pet not found",
+		};
+	}
+
+	/* checking the match of pet.userId and sesson.userId, 
+	to know if the user has the pet in his list  */
+	const DoesTheUserOwnsThePet = pet.userId === session.user.id;
+
+	if (!DoesTheUserOwnsThePet) {
+		return {
+			message: "user is not authorized to make the changes",
+		};
+	}
 
 	// if validation is success go into the if block
 	if (validatedForm.success && validatedId.success) {
@@ -119,10 +148,7 @@ checks include below
 */
 export async function deletePet(petId: unknown) {
 	/* if the user is logged In */
-	const session = await auth();
-	if (!session?.user) {
-		redirect("/login");
-	}
+	const session = await checkAuth();
 
 	/* validation of the schema */
 	const validatedId = IndivdiualPetId.safeParse(petId);

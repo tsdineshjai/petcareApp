@@ -1,17 +1,12 @@
+import { checkAuth } from "@/lib/server-utils";
+
 import ContentBlock from "@/components/contentBlock";
 import H1 from "@/components/h1";
-import React from "react";
-
-import { auth } from "@/lib/auth";
-import { redirect } from "next/navigation";
 import SignoutButton from "@/components/sign-out-button";
 
 async function Account() {
-	const session = await auth();
+	const session = await checkAuth();
 
-	if (!session?.user) {
-		redirect("/login");
-	}
 	return (
 		<main>
 			<H1 className="my-[1.5rem] text-lg font-serif">Your Account</H1>
