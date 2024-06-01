@@ -1,24 +1,26 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { auth, signIn, signOut } from "@/lib/auth";
 import prisma from "@/lib/db";
-import { FormSchema, IndivdiualPetId, SignInSchema } from "@/lib/validation";
-import { signIn, signOut } from "@/lib/auth";
-import bcrypt from "bcrypt";
+import { authSchema, petFormSchema, petIdSchema } from "@/lib/validation";
+import { revalidatePath } from "next/cache";
+import bcrypt from "bcryptjs";
+import { redirect } from "next/navigation";
 import { checkAuth, getPetById } from "@/lib/server-utils";
 import { Prisma } from "@prisma/client";
-import { delay } from "@/lib/utils";
 import { AuthError } from "next-auth";
 
-// user actions ->
+const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
+
+// --- user actions ---
 
 export async function logIn(prevState: unknown, formData: unknown) {
-	await delay(1000);
 	if (!(formData instanceof FormData)) {
 		return {
 			message: "Invalid form data.",
 		};
 	}
+
 	try {
 		await signIn("credentials", formData);
 	} catch (error) {
@@ -41,16 +43,7 @@ export async function logIn(prevState: unknown, formData: unknown) {
 	}
 }
 
-export async function signout() {
-	await delay(1500);
-	await signOut({
-		redirectTo: "/",
-	});
-}
-
 export async function signUp(prevState: unknown, formData: unknown) {
-	await delay(1000);
-
 	// check if formData is a FormData type
 	if (!(formData instanceof FormData)) {
 		return {
@@ -62,7 +55,7 @@ export async function signUp(prevState: unknown, formData: unknown) {
 	const formDataEntries = Object.fromEntries(formData.entries());
 
 	// validation
-	const validatedFormData = SignInSchema.safeParse(formDataEntries);
+	const validatedFormData = authSchema.safeParse(formDataEntries);
 	if (!validatedFormData.success) {
 		return {
 			message: "Invalid form data.",
@@ -95,163 +88,150 @@ export async function signUp(prevState: unknown, formData: unknown) {
 	await signIn("credentials", formData);
 }
 
-// pet actions--CRUD operations
+export async function logOut() {
+	await signOut({ redirectTo: "/" });
+}
+
+// --- pet actions ---
+
 export async function addPet(pet: unknown) {
-	/* checking if the user is logged in */
 	const session = await checkAuth();
 
-	const validatedForm = FormSchema.safeParse(pet);
+	const validatedPet = petFormSchema.safeParse(pet);
+	if (!validatedPet.success) {
+		return {
+			message: "Invalid pet data.",
+		};
+	}
 
-	if (validatedForm.success) {
-		try {
-			// await prisma.pet.create({
-			// 	data: {
-			// 		userId: session.user.id,
-			// 		...validatedForm.data,
-			// 	},
-			// });
-
-			// you can do like this in the below way also
-
-			await prisma.pet.create({
-				data: {
-					...validatedForm.data,
-					user: {
-						connect: {
-							id: session.user.id,
-						},
+	try {
+		await prisma.pet.create({
+			data: {
+				...validatedPet.data,
+				user: {
+					connect: {
+						id: session.user.id,
 					},
 				},
-			});
-
-			console.log(`successfully added the pet`);
-			revalidatePath("/app", "layout");
-		} catch (error: any) {
-			console.log(error);
-			return {
-				message: "Could not add pet.",
-			};
-		}
-	} else {
+			},
+		});
+	} catch (error) {
+		console.log(error);
 		return {
-			message: "Schema is invalid.",
+			message: "Could not add pet.",
 		};
 	}
+
+	revalidatePath("/app", "layout");
 }
 
-export async function editPet(selectedId: unknown, formData: unknown) {
-	/* if the user is actually logged in */
+export async function editPet(petId: unknown, newPetData: unknown) {
+	// authentication check
 	const session = await checkAuth();
 
-	/* validation of the schema */
-	const validatedForm = FormSchema.safeParse(formData);
-	const validatedId = IndivdiualPetId.safeParse(selectedId);
+	// validation
+	const validatedPetId = petIdSchema.safeParse(petId);
+	const validatedPet = petFormSchema.safeParse(newPetData);
 
-	if (!validatedId.success || !validatedForm.success) {
+	if (!validatedPetId.success || !validatedPet.success) {
 		return {
 			message: "Invalid pet data.",
 		};
 	}
 
-	/* checking the existence of the pet that is going to be updated */
-	const pet = await getPetById(validatedId.data);
-
+	// authorization check
+	const pet = await getPetById(validatedPetId.data);
 	if (!pet) {
 		return {
-			message: "pet not found",
+			message: "Pet not found.",
 		};
 	}
-
-	/* checking the match of pet.userId and sesson.userId, 
-	to know if the user has the pet in his list  */
-	const DoesTheUserOwnsThePet = pet.userId === session.user.id;
-
-	if (!DoesTheUserOwnsThePet) {
+	if (pet.userId !== session.user.id) {
 		return {
-			message: "user is not authorized to make the changes",
+			message: "Not authorized.",
 		};
 	}
 
-	// if validation is success go into the if block
-	if (validatedForm.success && validatedId.success) {
-		try {
-			await prisma.pet.update({
-				where: {
-					id: validatedId.data,
-				},
-				data: validatedForm.data,
-			});
-			console.log(`successfully udpated the pet`);
-			revalidatePath("/app", "layout");
-		} catch (error: any) {
-			return {
-				message: "Could not edit pet.",
-			};
-		}
-	} else {
+	// database mutation
+	try {
+		await prisma.pet.update({
+			where: {
+				id: validatedPetId.data,
+			},
+			data: validatedPet.data,
+		});
+	} catch (error) {
 		return {
-			message: "Schema is invalid.",
+			message: "Could not edit pet.",
 		};
 	}
+
+	revalidatePath("/app", "layout");
 }
 
-//before deleting, we need to make valdation and authentication checks
-/* 
-checks include below
-1. If the user is logged in
-2. If the pet that is going to be deleted actually exists
-3. If the petId and the session user.id matches, to check if the user is going to delete a pet of its own
-
-*/
 export async function deletePet(petId: unknown) {
-	/* if the user is logged In */
+	// authentication check
 	const session = await checkAuth();
 
-	/* validation of the schema */
-	const validatedId = IndivdiualPetId.safeParse(petId);
-
-	if (!validatedId.success) {
+	// validation
+	const validatedPetId = petIdSchema.safeParse(petId);
+	if (!validatedPetId.success) {
 		return {
 			message: "Invalid pet data.",
 		};
 	}
 
-	/* checking the existence of the pet that is going to be deleted */
-	const pet = await getPetById(validatedId.data);
-
+	// authorization check
+	const pet = await getPetById(validatedPetId.data);
 	if (!pet) {
 		return {
-			message: "pet not found",
+			message: "Pet not found.",
 		};
 	}
-
-	/* checking the match of pet.userId and sesson.userId, 
-	to know if the user has the pet in his list  */
-	const DoesTheUserOwnsThePet = pet.userId === session.user.id;
-
-	if (!DoesTheUserOwnsThePet) {
+	if (pet.userId !== session.user.id) {
 		return {
-			message: "user is not authorized to make the changes",
+			message: "Not authorized.",
 		};
 	}
 
-	if (validatedId.success) {
-		try {
-			await prisma.pet.delete({
-				where: {
-					id: validatedId.data,
-				},
-			});
-			console.log(`successfully deleted the pet`);
-			revalidatePath("/app", "layout");
-		} catch (error) {
-			return {
-				message: "Could not delete pet.",
-			};
-		}
-	} else {
+	// database mutation
+	try {
+		await prisma.pet.delete({
+			where: {
+				id: validatedPetId.data,
+			},
+		});
+	} catch (error) {
 		return {
-			message: "PetId is invalid",
+			message: "Could not delete pet.",
 		};
 	}
+
+	revalidatePath("/app", "layout");
+}
+
+// --- payment actions ---
+
+export async function createCheckoutSession() {
+	// authentication check
+	const session = await checkAuth();
+
+	console.log(session.user.email);
+
+	// create checkout session
+	const checkoutSession = await stripe.checkout.sessions.create({
+		customer_email: session.user.email,
+		line_items: [
+			{
+				price: "price_1PMjDCA6NlgjyWqNipXu7MVe",
+				quantity: 1,
+			},
+		],
+		mode: "payment",
+		success_url: `${process.env.CANONICAL_URL}/payment?success=true`,
+		cancel_url: `${process.env.CANONICAL_URL}/payment?cancelled=true`,
+	});
+
+	// redirect user
+	redirect(checkoutSession.url);
 }

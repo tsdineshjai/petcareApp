@@ -2,7 +2,7 @@
 
 import React, { useTransition } from "react";
 import { Button } from "./ui/button";
-import { signout } from "@/app/actions/actions";
+import { logOut } from "@/app/actions/actions";
 
 function SignoutButton() {
 	const [isPending, startTransition] = useTransition();
@@ -11,7 +11,7 @@ function SignoutButton() {
 			disabled={isPending}
 			onClick={async () => {
 				startTransition(async () => {
-					await signout();
+					await logOut();
 				});
 			}}
 			variant={"default"}

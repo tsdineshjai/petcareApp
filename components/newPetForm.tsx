@@ -1,17 +1,14 @@
 "use client";
 
 import React from "react";
-import { addPet, editPet } from "@/app/actions/actions";
 import PetformButton from "./petformButton";
-import { toast } from "sonner";
 import { Pet } from "@prisma/client";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { DEFAULT_PET_IMAGE } from "@/lib/constants";
-import { FormSchema } from "@/lib/validation";
+import { petFormSchema } from "@/lib/validation";
 import { usePetContext } from "@/lib/hooks";
-import { PetEssentials } from "@/lib/types";
 
 type NewPetFormProps = {
 	actionType: "edit" | "add";
@@ -26,8 +23,8 @@ function NewPetForm({ actionType, selectedPet, closeDialog }: NewPetFormProps) {
 		trigger,
 		getValues,
 		formState: { errors },
-	} = useForm<z.infer<typeof FormSchema>>({
-		resolver: zodResolver(FormSchema),
+	} = useForm<z.infer<typeof petFormSchema>>({
+		resolver: zodResolver(petFormSchema),
 		defaultValues:
 			actionType == "edit"
 				? {
