@@ -216,8 +216,6 @@ export async function createCheckoutSession() {
 	// authentication check
 	const session = await checkAuth();
 
-	console.log(session.user.email);
-
 	// create checkout session
 	const checkoutSession = await stripe.checkout.sessions.create({
 		customer_email: session.user.email,
